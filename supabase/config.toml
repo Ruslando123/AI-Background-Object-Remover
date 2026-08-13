@@ -1,0 +1,25 @@
+project_id = "ai-background-object-remover"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[storage]
+enabled = true
+file_size_limit = "500MiB"
+
+[functions.api-v1]
+verify_jwt = false
+
+[functions.process-jobs]
+verify_jwt = false
+
+[functions.cleanup-expired]
+verify_jwt = false

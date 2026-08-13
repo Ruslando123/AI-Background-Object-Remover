@@ -1,0 +1,36 @@
+{
+  "name": "ai-background-object-remover-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm test",
+    "verify:staging-db": "psql \"$SUPABASE_DB_URL\" -v ON_ERROR_STOP=1 -f scripts/verify-staging.sql",
+    "smoke": "bash scripts/smoke-backend.sh",
+    "smoke:fal": "bash scripts/smoke-fal.sh",
+    "smoke:fal-replace": "bash scripts/smoke-fal-replace.sh",
+    "verify:fal-job": "psql \"$SUPABASE_DB_URL\" -v ON_ERROR_STOP=1 -v job_id=\"$JOB_ID\" -f scripts/verify-existing-fal-job.sql",
+    "smoke:staging": "REQUIRE_DB_ASSERTIONS=1 bash scripts/smoke-backend.sh"
+  },
+  "dependencies": {
+    "@fal-ai/client": "^1.10.1",
+    "@supabase/supabase-js": "2.55.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.32.0",
+    "@types/node": "24.2.1",
+    "eslint": "9.32.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "16.3.0",
+    "prettier": "3.6.2",
+    "typescript": "5.9.2",
+    "typescript-eslint": "8.39.0",
+    "vitest": "3.2.4"
+  }
+}

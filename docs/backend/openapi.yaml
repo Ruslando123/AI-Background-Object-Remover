@@ -1,0 +1,343 @@
+openapi: 3.1.0
+info:
+  title: AI Background & Object Remover Backend
+  version: 1.0.0
+  description: Provider-neutral asynchronous media orchestration API.
+servers:
+  - url: /functions/v1/api-v1
+security:
+  - SessionId: []
+    SessionToken: []
+paths:
+  /sessions:
+    post:
+      security: []
+      summary: Create an anonymous session
+      responses:
+        "201":
+          {
+            description: Session created,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/SessionResponse" } },
+              },
+          }
+        default: { $ref: "#/components/responses/Error" }
+  /uploads/presign:
+    post:
+      summary: Reserve an asset and create a signed upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [filename, mimeType, sizeBytes, mediaType, role]
+              properties:
+                filename: { type: string, maxLength: 255 }
+                mimeType: { type: string }
+                sizeBytes: { type: integer, minimum: 1 }
+                mediaType: { enum: [image, video] }
+                role: { enum: [original, mask, uploaded_background] }
+      responses:
+        "201":
+          description: Upload reserved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/Envelope" }
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          assetId: { type: string, format: uuid }
+                          uploadUrl: { type: string, format: uri }
+                          storagePath: { type: string }
+                          expiresAt: { type: string, format: date-time }
+        default: { $ref: "#/components/responses/Error" }
+  /assets/complete-upload:
+    post:
+      summary: Verify a directly uploaded object
+      requestBody: { $ref: "#/components/requestBodies/AssetId" }
+      responses:
+        "200":
+          {
+            description: Asset ready,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/Envelope" } },
+              },
+          }
+        default: { $ref: "#/components/responses/Error" }
+  /jobs:
+    post:
+      summary: Create and submit an idempotent processing job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [operation, inputAssetId, idempotencyKey]
+              properties:
+                operation: { $ref: "#/components/schemas/JobOperation" }
+                inputAssetId: { type: string, format: uuid }
+                maskAssetId: { type: [string, "null"], format: uuid }
+                backgroundAssetId: { type: [string, "null"], format: uuid }
+                parameters: { type: object, additionalProperties: true }
+                idempotencyKey: { type: string, minLength: 1, maxLength: 128 }
+      responses:
+        "201":
+          {
+            description: Job submitted,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/JobResponse" } },
+              },
+          }
+        "200":
+          {
+            description: Existing idempotent job,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/JobResponse" } },
+              },
+          }
+        default: { $ref: "#/components/responses/Error" }
+  /jobs/{jobId}:
+    parameters: [{ $ref: "#/components/parameters/JobId" }]
+    get:
+      summary: Read/poll a job
+      responses:
+        "200":
+          {
+            description: Current state,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/JobResponse" } },
+              },
+          }
+        default: { $ref: "#/components/responses/Error" }
+  /jobs/{jobId}/retry:
+    parameters: [{ $ref: "#/components/parameters/JobId" }]
+    post:
+      summary: Retry a failed retryable job with existing assets
+      responses:
+        "201":
+          {
+            description: Child job created,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/JobResponse" } },
+              },
+          }
+        default: { $ref: "#/components/responses/Error" }
+  /jobs/{jobId}/cancel:
+    parameters: [{ $ref: "#/components/parameters/JobId" }]
+    post:
+      summary: Cancel a queued or processing job
+      responses:
+        "200":
+          {
+            description: Job cancelled,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/JobResponse" } },
+              },
+          }
+        default: { $ref: "#/components/responses/Error" }
+  /assets/{assetId}/download:
+    parameters:
+      - name: assetId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      summary: Create a signed download URL
+      responses:
+        "200":
+          {
+            description: Signed download,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/Envelope" } },
+              },
+          }
+        default: { $ref: "#/components/responses/Error" }
+  /sessions/{sessionId}:
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    delete:
+      summary: Soft-delete the current session
+      responses:
+        "200":
+          {
+            description: Session deleted,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/Envelope" } },
+              },
+          }
+        default: { $ref: "#/components/responses/Error" }
+  /webhooks/{provider}:
+    parameters:
+      - name: provider
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      security: []
+      summary: Receive a signed, deduplicated provider event
+      responses:
+        "200":
+          {
+            description: Accepted or duplicate,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/Envelope" } },
+              },
+          }
+        default: { $ref: "#/components/responses/Error" }
+  /capabilities:
+    get:
+      security: []
+      summary: Read provider operations, formats, and limits
+      responses:
+        "200":
+          {
+            description: Capabilities,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/Envelope" } },
+              },
+          }
+        default: { $ref: "#/components/responses/Error" }
+components:
+  securitySchemes:
+    SessionId: { type: apiKey, in: header, name: X-Session-Id }
+    SessionToken: { type: apiKey, in: header, name: X-Session-Token }
+  parameters:
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  requestBodies:
+    AssetId:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [assetId]
+            properties: { assetId: { type: string, format: uuid } }
+  responses:
+    Error:
+      description: Controlled application error
+      content:
+        {
+          application/json:
+            { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+        }
+  schemas:
+    Envelope:
+      type: object
+      required: [data, error, requestId]
+      properties:
+        data: {}
+        error: { type: [object, "null"] }
+        requestId: { type: string, format: uuid }
+    SessionResponse:
+      allOf:
+        - { $ref: "#/components/schemas/Envelope" }
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [sessionId, sessionToken, expiresAt]
+              properties:
+                sessionId: { type: string, format: uuid }
+                sessionToken: { type: string, description: Returned once }
+                expiresAt: { type: string, format: date-time }
+    JobOperation:
+      enum:
+        [
+          IMAGE_DETECT_SUBJECT,
+          IMAGE_REMOVE_BACKGROUND,
+          IMAGE_REPLACE_BACKGROUND,
+          IMAGE_GENERATE_BACKGROUND,
+          IMAGE_SEGMENT_OBJECT,
+          IMAGE_ERASE_OBJECT,
+          IMAGE_REFINE_MASK,
+          VIDEO_DETECT_SUBJECT,
+          VIDEO_REMOVE_BACKGROUND,
+          VIDEO_REPLACE_BACKGROUND,
+          VIDEO_TRACK_OBJECT,
+          VIDEO_ERASE_OBJECT,
+        ]
+    JobResponse:
+      allOf:
+        - { $ref: "#/components/schemas/Envelope" }
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                id: { type: string, format: uuid }
+                operation: { $ref: "#/components/schemas/JobOperation" }
+                status:
+                  {
+                    enum:
+                      [
+                        draft,
+                        validating,
+                        queued,
+                        submitting,
+                        processing,
+                        postprocessing,
+                        completed,
+                        failed,
+                        cancelled,
+                        expired,
+                      ],
+                  }
+                progress:
+                  type: object
+                  properties:
+                    stage: { type: [string, "null"] }
+                    percent:
+                      { type: [integer, "null"], minimum: 0, maximum: 100 }
+                resultAssetId: { type: [string, "null"], format: uuid }
+                error: { type: [object, "null"] }
+                createdAt: { type: string, format: date-time }
+                updatedAt: { type: string, format: date-time }
+    ErrorResponse:
+      type: object
+      required: [data, error, requestId]
+      properties:
+        data: { type: "null" }
+        error:
+          type: object
+          required: [code, message, retryable, details]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            retryable: { type: boolean }
+            details: { type: object }
+        requestId: { type: string, format: uuid }

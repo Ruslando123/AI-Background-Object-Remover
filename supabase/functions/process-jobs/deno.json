@@ -1,0 +1,11 @@
+{
+  "imports": {
+    "@fal-ai/client": "npm:@fal-ai/client@1.10.1",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.55.0",
+    "zod": "npm:zod@3.25.76"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.window", "dom", "dom.iterable", "esnext"]
+  }
+}
