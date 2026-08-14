@@ -183,6 +183,25 @@ describe("fal status and result normalization", () => {
       raw: { requestIdPresent: true, preserveAudio: true },
     });
   });
+
+  it("keeps an MP4 result when fal omits a specific content type", () => {
+    expect(
+      normalizeFalVideoRemoveBackgroundResult({
+        video: {
+          url: "https://fal.media/processed-video",
+          content_type: "application/octet-stream",
+        },
+        request_id: "bria-request-1",
+      }),
+    ).toMatchObject({
+      status: "completed",
+      output: {
+        mimeType: "video/mp4",
+        extension: "mp4",
+        filename: "result.mp4",
+      },
+    });
+  });
 });
 
 describe("fal error mapping", () => {

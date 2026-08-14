@@ -99,7 +99,16 @@ export function normalizeFalVideoRemoveBackgroundResult(
 ): ProviderJobStatusResult {
   const video = result.video;
   if (!video?.url) throw new ProviderError("PROVIDER_REJECTED");
-  const mimeType = video.content_type || "video/webm";
+  const fileHint = `${video.file_name ?? ""} ${video.url}`.toLowerCase();
+  const declaredMimeType = video.content_type?.split(";", 1)[0]?.trim();
+  const mimeType =
+    declaredMimeType && declaredMimeType !== "application/octet-stream"
+      ? declaredMimeType
+      : fileHint.includes(".webm")
+        ? "video/webm"
+        : fileHint.includes(".mov")
+          ? "video/quicktime"
+          : "video/mp4";
   const formats: Record<string, { extension: string; filename: string }> = {
     "video/webm": { extension: "webm", filename: "result.webm" },
     "video/mp4": { extension: "mp4", filename: "result.mp4" },
