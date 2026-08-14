@@ -364,10 +364,36 @@ describe("FalAIProvider queue flow", () => {
         input: {
           image_url: providerInput.input.signedUrl,
           mask_url: maskUrl,
+          mask_type: "manual",
           sync_mode: false,
         },
       },
     );
+  });
+
+  it("normalizes a completed object-erasing result", async () => {
+    const falClient = client({
+      status: vi.fn().mockResolvedValue({
+        status: "COMPLETED",
+        request_id: "fal-request-1",
+      }),
+      result: vi.fn().mockResolvedValue({
+        data: {
+          image: {
+            url: "https://fal.media/erased.png",
+            content_type: "image/png",
+          },
+        },
+        requestId: "fal-request-1",
+      }),
+    });
+    const provider = new FalAIProvider(loadConfig({ falKey: "server-only" }), falClient);
+    await expect(
+      provider.getJobStatus("fal-request-1", "IMAGE_ERASE_OBJECT"),
+    ).resolves.toMatchObject({
+      status: "completed",
+      output: { downloadUrl: "https://fal.media/erased.png" },
+    });
   });
 
   it("submits video background removal through Queue API with audio preserved", async () => {

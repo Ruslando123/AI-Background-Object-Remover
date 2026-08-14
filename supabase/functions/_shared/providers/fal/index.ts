@@ -215,6 +215,7 @@ export class FalAIProvider implements AIProvider {
                   return {
                     image_url: input.input.signedUrl,
                     mask_url: input.mask.signedUrl,
+                    mask_type: "manual" as const,
                     sync_mode: false as const,
                   };
                 })()
@@ -256,9 +257,7 @@ export class FalAIProvider implements AIProvider {
         return normalizeFalVideoRemoveBackgroundResult(
           result.data as FalVideoRemoveBackgroundOutput,
         );
-      return ["IMAGE_REPLACE_BACKGROUND", "IMAGE_ERASE_OBJECT"].includes(
-        operation,
-      )
+      return operation === "IMAGE_REPLACE_BACKGROUND"
         ? normalizeFalReplaceBackgroundResult(
             result.data as FalReplaceBackgroundOutput,
           )
