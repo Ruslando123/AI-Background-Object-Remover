@@ -176,9 +176,9 @@ export class FalAIProvider implements AIProvider {
         input.operation === "VIDEO_REMOVE_BACKGROUND"
           ? {
               video_url: input.input.signedUrl,
-              output_container_and_codec: "webm_vp9" as const,
+              output_container_and_codec: "mp4_h264" as const,
               preserve_audio: true as const,
-              background_color: "Transparent" as const,
+              background_color: "Black" as const,
               auto_zoom: false as const,
             }
           : input.operation === "IMAGE_REPLACE_BACKGROUND"

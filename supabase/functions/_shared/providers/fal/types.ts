@@ -34,9 +34,9 @@ export interface FalReplaceBackgroundOutput {
 
 export interface FalVideoRemoveBackgroundInput {
   video_url: string;
-  output_container_and_codec: "webm_vp9";
+  output_container_and_codec: "mp4_h264";
   preserve_audio: true;
-  background_color: "Transparent";
+  background_color: "Black";
   auto_zoom: false;
 }
 
