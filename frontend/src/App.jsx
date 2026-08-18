@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowCounterClockwise,
+  CaretDown,
   CheckCircle,
   DownloadSimple,
   Eyedropper,
@@ -57,13 +58,44 @@ const modes = [
 ];
 
 const showcaseExamples = [
-  { title: "Portrait", asset: "/showcase/woman-before-after.png" },
+  { title: "Portrait cutout", asset: "/showcase/woman-before-after.png" },
+  { title: "New background", asset: "/showcase/man-replaced.png" },
+  { title: "Object cleanup", asset: "/showcase/man-removed.png" },
+  { title: "Product cutout", asset: "/showcase/shoe-before-after.png" },
   { title: "Fine edges", asset: "/showcase/dog-before-after.png" },
-  { title: "Product", asset: "/showcase/shoe-before-after.png" },
   { title: "People", asset: "/showcase/people-before-after.png" },
-  { title: "New background", asset: "/showcase/new-background-before-after.png" },
-  { title: "Color background", asset: "/showcase/color-background-before-after.png" },
 ];
+
+const initialMediaSessions = {
+  photo: {
+    mainFile: null,
+    resultUrl: "/demo/result.png",
+    status: "demo",
+    stage: "",
+    progress: 0,
+    error: "",
+    downloadName: "ai-background-result.png",
+    sourceRatio: 4 / 3,
+  },
+  video: {
+    mainFile: null,
+    resultUrl: "",
+    status: "ready",
+    stage: "",
+    progress: 0,
+    error: "",
+    downloadName: "ai-background-video.webm",
+    sourceRatio: 16 / 9,
+  },
+};
+
+function progressLabel(progress, mediaMode, mode) {
+  if (progress < 30) return "Uploading";
+  if (progress >= 90) return "Finalizing";
+  if (mediaMode === "video" || mode === "remove") return "Removing background";
+  if (mode === "erase") return "Erasing selected object";
+  return "Creating new background";
+}
 
 function ShowcaseComparison({ example, index }) {
   const [position, setPosition] = useState(50);
@@ -236,7 +268,7 @@ async function uploadAsset(file, role, auth, mediaType = "image") {
 export function App() {
   const [mediaMode, setMediaMode] = useState("photo");
   const [mode, setMode] = useState("remove");
-  const [mainFile, setMainFile] = useState(null);
+  const [mediaSessions, setMediaSessions] = useState(initialMediaSessions);
   const [backgroundFile, setBackgroundFile] = useState(null);
   const [color, setColor] = useState("#E8F0FF");
   const [prompt, setPrompt] = useState("");
@@ -245,12 +277,6 @@ export function App() {
   const [maskRevision, setMaskRevision] = useState(0);
   const [comparisonPosition, setComparisonPosition] = useState(50);
   const [comparisonRatio, setComparisonRatio] = useState(4 / 3);
-  const [resultUrl, setResultUrl] = useState("/demo/result.png");
-  const [status, setStatus] = useState("demo");
-  const [stage, setStage] = useState("");
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState("");
-  const [downloadName, setDownloadName] = useState("ai-background-result.png");
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef(null);
   const backgroundRef = useRef(null);
@@ -258,9 +284,37 @@ export function App() {
   const maskCanvasRef = useRef(null);
   const drawingRef = useRef(false);
   const comparisonDraggingRef = useRef(false);
-  const processingContextRef = useRef(null);
+  const processingContextRef = useRef({ photo: null, video: null });
   const originalVideoRef = useRef(null);
   const resultVideoRef = useRef(null);
+
+  const activeSession = mediaSessions[mediaMode];
+  const {
+    mainFile,
+    resultUrl,
+    status,
+    stage,
+    progress,
+    error,
+    downloadName,
+    sourceRatio,
+  } = activeSession;
+
+  function updateSession(patch, targetMode = mediaMode) {
+    setMediaSessions((current) => ({
+      ...current,
+      [targetMode]: { ...current[targetMode], ...patch },
+    }));
+  }
+
+  const setMainFile = (value) => updateSession({ mainFile: value });
+  const setResultUrl = (value) => updateSession({ resultUrl: value });
+  const setStatus = (value) => updateSession({ status: value });
+  const setStage = (value) => updateSession({ stage: value });
+  const setProgress = (value) => updateSession({ progress: value });
+  const setError = (value) => updateSession({ error: value });
+  const setDownloadName = (value) => updateSession({ downloadName: value });
+  const setSourceRatio = (value) => updateSession({ sourceRatio: value });
 
   const mainPreview = useMemo(
     () => (mainFile ? URL.createObjectURL(mainFile) : "/demo/original.png"),
@@ -295,7 +349,7 @@ export function App() {
     setStatus("ready");
     setError("");
     setMaskRevision(0);
-    processingContextRef.current = null;
+    processingContextRef.current[mediaMode] = null;
   }
 
   function sizeMaskCanvas() {
@@ -332,8 +386,8 @@ export function App() {
     );
     context.fill();
     context.globalAlpha = 1;
-    if (processingContextRef.current)
-      processingContextRef.current.maskAssetId = undefined;
+    if (processingContextRef.current.photo)
+      processingContextRef.current.photo.maskAssetId = undefined;
     setMaskRevision((value) => value + 1);
   }
 
@@ -341,8 +395,8 @@ export function App() {
     const canvas = maskCanvasRef.current;
     canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
     setMaskRevision(0);
-    if (processingContextRef.current)
-      processingContextRef.current.maskAssetId = undefined;
+    if (processingContextRef.current.photo)
+      processingContextRef.current.photo.maskAssetId = undefined;
   }
 
   function updateComparison(event) {
@@ -440,7 +494,7 @@ export function App() {
     setStage("Creating a secure session…");
     setError("");
     try {
-      let context = processingContextRef.current;
+      let context = processingContextRef.current[mediaMode];
       if (!context) {
         const session = await api("/sessions", { method: "POST" });
         const auth = {
@@ -460,7 +514,7 @@ export function App() {
           mediaMode === "video" ? "video" : "image",
         );
         context = { auth, inputAssetId };
-        processingContextRef.current = context;
+        processingContextRef.current[mediaMode] = context;
       }
       const { auth, inputAssetId } = context;
       let { backgroundAssetId, maskAssetId } = context;
@@ -553,26 +607,17 @@ export function App() {
   }
 
   function reset() {
-    setMainFile(null);
+    setMediaSessions(initialMediaSessions);
     setBackgroundFile(null);
     setMode("remove");
     setPrompt("");
     clearMask();
-    setResultUrl("/demo/result.png");
-    setStatus("demo");
-    setError("");
-    setStage("");
-    setProgress(0);
-    processingContextRef.current = null;
+    setMediaMode("photo");
+    processingContextRef.current = { photo: null, video: null };
   }
 
   function switchMediaMode(nextMode) {
     setMediaMode(nextMode);
-    setMainFile(null);
-    setResultUrl(nextMode === "photo" ? "/demo/result.png" : "");
-    setStatus(nextMode === "photo" ? "demo" : "ready");
-    setError("");
-    processingContextRef.current = null;
   }
 
   const actionLabel =
@@ -608,24 +653,26 @@ export function App() {
 
       <section className="workspace">
         <div className="canvas-column">
-          <div className="media-switch" aria-label="Media type">
-            <button
-              type="button"
-              className={mediaMode === "photo" ? "active" : ""}
-              onClick={() => switchMediaMode("photo")}
+          <div className="mobile-workspace-heading">
+            <p className="eyebrow">AI editor</p>
+            <h1>Background &amp; Object Remover</h1>
+          </div>
+          <div className="media-select-wrap">
+            {mediaMode === "photo" ? <ImageSquare size={18} /> : <VideoCamera size={18} />}
+            <select
+              className="media-select"
+              value={mediaMode}
+              onChange={(event) => switchMediaMode(event.target.value)}
+              aria-label="Media type"
             >
-              <ImageSquare size={18} /> Photo
-            </button>
-            <button
-              type="button"
-              className={mediaMode === "video" ? "active" : ""}
-              onClick={() => switchMediaMode("video")}
-            >
-              <VideoCamera size={18} /> Video
-            </button>
+              <option value="photo">Photo</option>
+              <option value="video">Video</option>
+            </select>
+            <CaretDown className="select-caret" size={16} weight="bold" />
           </div>
           <div
             className={`upload-canvas ${dragging ? "is-dragging" : ""} ${mainFile ? "has-image" : "is-empty"}`}
+            style={mainFile ? { "--source-ratio": sourceRatio, aspectRatio: sourceRatio } : undefined}
             onDragOver={(event) => {
               event.preventDefault();
               setDragging(true);
@@ -641,9 +688,15 @@ export function App() {
               <div className="editor-stage">
                 <img
                   ref={editorImageRef}
-                  src={mainPreview}
-                  alt="Uploaded source image"
-                  onLoad={sizeMaskCanvas}
+                  src={status === "completed" && resultUrl ? resultUrl : mainPreview}
+                  alt={status === "completed" ? "Processed result" : "Uploaded source image"}
+                  onLoad={(event) => {
+                    const image = event.currentTarget;
+                    if (image.naturalWidth && image.naturalHeight) {
+                      setSourceRatio(image.naturalWidth / image.naturalHeight);
+                    }
+                    sizeMaskCanvas();
+                  }}
                 />
                 {mode === "erase" && (
                   <>
@@ -674,9 +727,15 @@ export function App() {
             ) : mainFile && mediaMode === "video" ? (
               <video
                 className="video-preview"
-                src={mainPreview}
+                src={status === "completed" && resultUrl ? resultUrl : mainPreview}
                 controls
                 playsInline
+                onLoadedMetadata={(event) => {
+                  const video = event.currentTarget;
+                  if (video.videoWidth && video.videoHeight) {
+                    setSourceRatio(video.videoWidth / video.videoHeight);
+                  }
+                }}
               />
             ) : null}
             <button
@@ -711,11 +770,64 @@ export function App() {
                   : "image/jpeg,image/png,image/webp"
               }
               hidden
-              onChange={(event) => selectMain(event.target.files?.[0])}
+              onChange={(event) => {
+                selectMain(event.target.files?.[0]);
+                event.target.value = "";
+              }}
             />
           </div>
 
-          {mediaMode === "photo" && (
+          <div className="mobile-workflow-controls">
+            <div className="mobile-action-row">
+              <label htmlFor="mobile-action">Action</label>
+              {mediaMode === "photo" ? (
+                <div className="action-select-wrap">
+                  <select
+                    id="mobile-action"
+                    value={mode}
+                    onChange={(event) => {
+                      setMode(event.target.value);
+                      setError("");
+                    }}
+                  >
+                    {modes.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+                  </select>
+                  <CaretDown className="select-caret" size={15} weight="bold" />
+                </div>
+              ) : (
+                <strong>Remove background</strong>
+              )}
+            </div>
+            {status === "processing" && (
+              <div className="progress-card" aria-live="polite">
+                <div className="progress-copy">
+                  <span><span className="spinner" /> {progressLabel(progress, mediaMode, mode)}</span>
+                  <strong>{Math.round(progress)}%</strong>
+                </div>
+                <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
+              </div>
+            )}
+            {error && <div className="error-message"><span>{error}</span></div>}
+            {status === "completed" && (
+              <div className="status-message success"><CheckCircle size={18} weight="fill" /> Result ready</div>
+            )}
+            <button
+              className="primary-button mobile-primary-button"
+              type="button"
+              onClick={processImage}
+              disabled={status === "processing"}
+            >
+              {status === "processing" ? <span className="spinner" /> : mediaMode === "video" ? <VideoCamera size={20} /> : <MagicWand size={20} weight="fill" />}
+              <span>{status === "processing" ? progressLabel(progress, mediaMode, mode) : mediaMode === "video" ? "Remove video background" : actionLabel}</span>
+            </button>
+            {status === "completed" && (
+              <a className="download-button" href={resultUrl} download={downloadName}>
+                <DownloadSimple size={20} /> Download result
+              </a>
+            )}
+          </div>
+
+          {mediaMode === "photo" && (!mainFile || status === "completed") && (
             <div className="comparison" aria-label="Before and after comparison">
               <div className="comparison-title">
                 <span>Result preview</span>
@@ -931,6 +1043,7 @@ export function App() {
                 fal.ai Bria VRMBG 3.0 removes the background while preserving
                 the audio track. Your result is delivered as a transparent WebM.
               </p>
+              <div className="panel-footer video-panel-footer">
               {error && (
                 <div className="error-message">
                   <span>{error}</span>
@@ -942,7 +1055,7 @@ export function App() {
               {status === "processing" && (
                 <div className="progress-card" aria-live="polite">
                   <div className="progress-copy">
-                    <span>{stage}</span>
+                    <span><span className="spinner" /> {progressLabel(progress, mediaMode, mode)}</span>
                     <strong>{Math.round(progress)}%</strong>
                   </div>
                   <div className="progress-track">
@@ -961,10 +1074,8 @@ export function App() {
                 onClick={processImage}
                 disabled={status === "processing"}
               >
-                <VideoCamera size={20} />
-                {status === "processing"
-                  ? "Processing…"
-                  : "Remove video background"}
+                {status === "processing" ? <span className="spinner" /> : <VideoCamera size={20} />}
+                <span>{status === "processing" ? progressLabel(progress, mediaMode, mode) : "Remove video background"}</span>
               </button>
               {status === "completed" && (
                 <button
@@ -982,6 +1093,7 @@ export function App() {
               >
                 <DownloadSimple size={21} /> Download WebM
               </a>
+              </div>
             </div>
           ) : (
             <>
@@ -1041,8 +1153,8 @@ export function App() {
                     hidden
                     onChange={(event) => {
                       setBackgroundFile(event.target.files?.[0] || null);
-                      if (processingContextRef.current)
-                        processingContextRef.current.backgroundAssetId =
+                      if (processingContextRef.current.photo)
+                        processingContextRef.current.photo.backgroundAssetId =
                           undefined;
                     }}
                   />
@@ -1139,9 +1251,9 @@ export function App() {
                   </div>
                 )}
                 {status === "processing" && (
-                  <div className="progress-card" aria-live="polite">
-                    <div className="progress-copy">
-                      <span>{stage}</span>
+                <div className="progress-card" aria-live="polite">
+                  <div className="progress-copy">
+                      <span><span className="spinner" /> {progressLabel(progress, mediaMode, mode)}</span>
                       <strong>{Math.round(progress)}%</strong>
                     </div>
                     <div className="progress-track">
@@ -1160,8 +1272,8 @@ export function App() {
                   onClick={processImage}
                   disabled={status === "processing"}
                 >
-                  <MagicWand size={21} weight="fill" />{" "}
-                  {status === "processing" ? "Processing…" : actionLabel}
+                  {status === "processing" ? <span className="spinner" /> : <MagicWand size={21} weight="fill" />}
+                  <span>{status === "processing" ? progressLabel(progress, mediaMode, mode) : actionLabel}</span>
                 </button>
                 {status === "completed" && (
                   <button
@@ -1196,33 +1308,20 @@ export function App() {
         </div>
         <div className="steps-grid">
           <article className="step-card">
-            <div className="step-visual step-ui" aria-label="Upload source file">
-              <span className="step-ui-icon"><UploadSimple size={34} weight="bold" /></span>
-              <div className="step-ui-copy"><strong>Drop your file here</strong><small>JPG · PNG · WEBP</small></div>
-              <span className="step-ui-status">READY</span>
-            </div>
-            <span className="step-number">01</span>
+            <span className="step-icon"><UploadSimple size={26} weight="bold" /></span>
+            <span className="step-number">01 / UPLOAD</span>
             <h3>Upload your file</h3>
             <p>Drop a JPG, PNG, WebP or supported video into the workspace.</p>
           </article>
           <article className="step-card featured">
-            <div className="step-visual step-ui processing-ui" aria-label="Automatic subject detection">
-              <span className="step-ui-icon"><Sparkle size={34} weight="fill" /></span>
-              <div className="step-ui-copy"><strong>Detecting subject</strong><small>EDGES · HAIR · DETAILS</small></div>
-              <div className="step-ui-progress"><span /></div>
-              <span className="step-ui-status">98%</span>
-            </div>
-            <span className="step-number">02</span>
-            <h3>Start processing</h3>
-            <p>AI finds the main subject and precisely handles every edge.</p>
+            <span className="step-icon"><Sparkle size={26} weight="fill" /></span>
+            <span className="step-number">02 / CHOOSE</span>
+            <h3>Choose an action</h3>
+            <p>Remove, replace or create a background, or erase an unwanted object.</p>
           </article>
           <article className="step-card">
-            <div className="step-visual step-ui result-ui checkerboard" aria-label="Background-free result ready">
-              <span className="step-ui-icon"><DownloadSimple size={34} weight="bold" /></span>
-              <div className="step-ui-copy"><strong>Your result is ready</strong><small>PNG · 2048 × 2048</small></div>
-              <span className="step-ui-status success-status">DONE</span>
-            </div>
-            <span className="step-number">03</span>
+            <span className="step-icon"><DownloadSimple size={26} weight="bold" /></span>
+            <span className="step-number">03 / DOWNLOAD</span>
             <h3>Download the result</h3>
             <p>Save a transparent file or create a new background instantly.</p>
           </article>
