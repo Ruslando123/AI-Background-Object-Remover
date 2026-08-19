@@ -48,9 +48,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .brand { display: flex; align-items: center; gap: 11px; border: 0; background: transparent; font-size: 16px; font-weight: 800; letter-spacing: -.025em; cursor: pointer; }
 .brand-mark { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; color: var(--accent-ink); background: var(--accent); box-shadow: 0 0 20px rgba(200,255,0,.22); }
-.top-actions { display: flex; align-items: center; gap: 8px; }
+.top-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
 .privacy { display: flex; align-items: center; gap: 7px; color: var(--muted); font: 600 10px "JetBrains Mono", monospace; letter-spacing: .05em; text-transform: uppercase; margin-right: 8px; }
-.ghost-button, .icon-button { min-height: 38px; border: 1px solid var(--line); background: var(--popover); cursor: pointer; display: inline-flex; align-items: center; gap: 7px; padding: 0 14px; border-radius: 999px; font-size: 12px; font-weight: 700; transition: .18s ease; }
+.ghost-button, .icon-button { position: static; flex: 0 0 auto; min-height: 38px; border: 1px solid var(--line); background: var(--popover); cursor: pointer; display: inline-flex; align-items: center; gap: 7px; padding: 0 14px; border-radius: 999px; font-size: 12px; font-weight: 700; transition: .18s ease; }
 .icon-button { width: 38px; padding: 0; justify-content: center; }
 .ghost-button:hover, .icon-button:hover { background: var(--hover); border-color: rgba(255,255,255,.16); transform: translateY(-1px); }
 
@@ -61,7 +61,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .media-select { width: 100%; border: 0; outline: 0; appearance: none; color: var(--accent-ink); background: transparent; font-size: 12px; font-weight: 800; cursor: pointer; }
 .select-caret { pointer-events: none; }
 
-.upload-canvas { width: 100%; min-height: 520px; border: 1px dashed rgba(144,152,184,.38); border-radius: 20px 20px 12px 12px; background: var(--popover); display: grid; place-items: center; position: relative; overflow: hidden; box-shadow: 0 26px 70px rgba(0,0,0,.22); transition: .2s ease; }
+.upload-canvas { width: 100%; height: clamp(520px, calc(100dvh - 180px), 820px); min-height: 520px; border: 1px dashed rgba(144,152,184,.38); border-radius: 20px 20px 12px 12px; background: var(--popover); display: grid; place-items: center; position: relative; overflow: hidden; box-shadow: 0 26px 70px rgba(0,0,0,.22); transition: .2s ease; }
 .upload-canvas.has-image { width: min(100%, calc(min(60vh, 620px) * var(--source-ratio))); min-height: 340px; max-height: min(60vh, 620px); margin-inline: auto; }
 .upload-canvas.is-dragging { border-color: var(--accent); background: var(--accent-dim); box-shadow: 0 0 0 3px rgba(200,255,0,.08), 0 0 50px rgba(200,255,0,.08); }
 .upload-canvas > img, .editor-stage, .video-preview { width: 100%; height: 100%; min-height: inherit; max-height: inherit; }
@@ -95,7 +95,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .checkerboard { background-color: #f7f7f7 !important; background-image: linear-gradient(45deg,#dfe1e6 25%,transparent 25%),linear-gradient(-45deg,#dfe1e6 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dfe1e6 75%),linear-gradient(-45deg,transparent 75%,#dfe1e6 75%) !important; background-size: 24px 24px !important; background-position: 0 0,0 12px,12px -12px,-12px 0 !important; }
 .empty-result { width: 100%; height: 100%; display: grid; place-content: center; justify-items: center; gap: 8px; color: #60677f; font-size: 12px; }
 
-.tool-panel { position: sticky; top: 64px; align-self: start; height: calc(100dvh - 64px); min-height: 0; overflow-y: auto; border-left: 1px solid var(--line); background: rgba(27,27,37,.82); padding: 28px 24px 24px; display: flex; flex-direction: column; backdrop-filter: blur(18px); }
+.tool-panel { position: sticky; top: 64px; align-self: start; height: clamp(620px, calc(100dvh - 96px), 900px); min-height: 0; overflow-y: auto; border-left: 1px solid var(--line); background: rgba(27,27,37,.82); padding: 28px 24px 24px; display: flex; flex-direction: column; backdrop-filter: blur(18px); }
 .eyebrow { margin: 0 0 8px; color: var(--accent); text-transform: uppercase; letter-spacing: .14em; font: 600 9px "JetBrains Mono", monospace; }
 h1 { margin: 0; font-size: 25px; line-height: 1.08; letter-spacing: -.04em; }
 .mode-list { margin-top: 22px; display: grid; gap: 8px; }

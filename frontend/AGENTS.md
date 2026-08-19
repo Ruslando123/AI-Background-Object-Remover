@@ -19,3 +19,4 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - At 390 × 844, prioritize a large preview plus action selection and primary action in the first viewport; secondary settings may continue below.
 - Marketing section headings are centered. The “3 easy steps” section uses compact icon/text cards without illustrative screenshots, and the first three photo examples demonstrate different operations.
 - Processing uses a stable disabled primary button, spinner, plain-language stage, and separate progress track. Do not use button-fill progress or internal labels such as `WORKSPACE / 01`.
+- On desktop, keep Reset in the top bar and keep the two editor columns visually balanced in height; trim excess vertical space only slightly and symmetrically. Preserve the existing compact mobile workflow.
