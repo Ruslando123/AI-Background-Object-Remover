@@ -4,7 +4,7 @@ This repository contains the production-oriented Supabase backend foundation. It
 
 ## Backend
 
-The backend uses PostgreSQL, a private Supabase Storage bucket, and TypeScript Edge Functions. A deterministic asynchronous mock adapter is enabled by default. The only real provider is fal.ai. `IMAGE_REMOVE_BACKGROUND` is live-verified through `fal-ai/bria/background/remove`; reference-image `IMAGE_REPLACE_BACKGROUND` is implemented through `fal-ai/bria/background/replace` and awaits its dedicated live smoke test.
+The backend uses PostgreSQL, a private Supabase Storage bucket, and TypeScript Edge Functions. A deterministic asynchronous mock adapter is enabled by default. The only real provider is fal.ai. `IMAGE_REMOVE_BACKGROUND` uses `fal-ai/birefnet/v2` with its dedicated `Matting` model and foreground refinement; reference-image `IMAGE_REPLACE_BACKGROUND` uses `fal-ai/bria/background/replace`.
 
 ```bash
 npm install

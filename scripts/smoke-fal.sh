@@ -43,7 +43,7 @@ curl -fsS -X POST "${API_URL}/assets/complete-upload" "${AUTH[@]}" -H 'Content-T
 
 echo "[5/7] Creating exactly one fal.ai job..."
 JOB="$(curl -fsS -X POST "${API_URL}/jobs" "${AUTH[@]}" -H 'Content-Type: application/json' \
-  --data "{\"operation\":\"IMAGE_REMOVE_BACKGROUND\",\"inputAssetId\":\"${INPUT_ID}\",\"parameters\":{},\"idempotencyKey\":\"fal-live-$(date +%s)\"}")"
+  --data "{\"operation\":\"IMAGE_REMOVE_BACKGROUND\",\"inputAssetId\":\"${INPUT_ID}\",\"parameters\":{\"refineForeground\":true},\"idempotencyKey\":\"fal-live-$(date +%s)\"}")"
 JOB_ID="$(jq -er '.data.id' <<<"${JOB}")"
 
 echo "[6/7] Polling job ${JOB_ID}..."

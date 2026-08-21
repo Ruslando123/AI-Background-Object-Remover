@@ -228,7 +228,16 @@ export class FalAIProvider implements AIProvider {
                     sync_mode: false as const,
                   };
                 })()
-              : { image_url: input.input.signedUrl, sync_mode: false as const };
+              : {
+                  image_url: input.input.signedUrl,
+                  model: "Matting" as const,
+                  operating_resolution: "2048x2048" as const,
+                  refine_foreground:
+                    input.parameters.refineForeground !== false,
+                  output_mask: false as const,
+                  output_format: "png" as const,
+                  sync_mode: false as const,
+                };
       const submitted = await this.getClient().queue.submit(model, {
         input: falInput,
       });

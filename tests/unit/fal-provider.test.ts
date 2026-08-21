@@ -246,9 +246,37 @@ describe("FalAIProvider queue flow", () => {
       {
         input: {
           image_url: providerInput.input.signedUrl,
+          model: "Matting",
+          operating_resolution: "2048x2048",
+          refine_foreground: true,
+          output_mask: false,
+          output_format: "png",
           sync_mode: false,
         },
       },
+    );
+  });
+
+  it("can disable foreground refinement while keeping the matting model", async () => {
+    const falClient = client();
+    const provider = new FalAIProvider(
+      loadConfig({ falKey: "server-only" }),
+      falClient,
+    );
+
+    await provider.submitJob({
+      ...providerInput,
+      parameters: { refineForeground: false },
+    });
+
+    expect(falClient.queue.submit).toHaveBeenCalledWith(
+      FAL_REMOVE_BACKGROUND_MODEL_ID,
+      expect.objectContaining({
+        input: expect.objectContaining({
+          model: "Matting",
+          refine_foreground: false,
+        }),
+      }),
     );
   });
 
@@ -406,7 +434,10 @@ describe("FalAIProvider queue flow", () => {
         requestId: "fal-request-1",
       }),
     });
-    const provider = new FalAIProvider(loadConfig({ falKey: "server-only" }), falClient);
+    const provider = new FalAIProvider(
+      loadConfig({ falKey: "server-only" }),
+      falClient,
+    );
     await expect(
       provider.getJobStatus("fal-request-1", "IMAGE_ERASE_OBJECT"),
     ).resolves.toMatchObject({

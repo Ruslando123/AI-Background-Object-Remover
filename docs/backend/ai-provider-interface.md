@@ -8,13 +8,15 @@
 
 The verified remove-background contract is:
 
-- model ID: `fal-ai/bria/background/remove`;
+- model ID: `fal-ai/birefnet/v2`;
+- model preset: `Matting` at `2048x2048`, PNG output;
+- `parameters.refineForeground` controls fal.ai `refine_foreground` and defaults to `true`;
 - input: `{ "image_url": "<temporary signed source URL>", "sync_mode": false }`;
 - output: `{ "image": { "url": string, "content_type"?: string, "file_name"?: string, "file_size"?: number, "width"?: number, "height"?: number } }`;
 - execution: official `@fal-ai/client` queue `submit`, `status`, then `result`;
 - statuses: `IN_QUEUE` → `preparing_media`, `IN_PROGRESS` → `removing_background`, `COMPLETED` → result retrieval/postprocessing. No percentage is synthesized.
 
-The schema was verified against the official [fal.ai model API page](https://fal.ai/models/fal-ai/bria/background/remove/api). The result must be PNG; the backend downloads it server-side and stores a new private output asset.
+The schema was verified against the official [fal.ai BiRefNet V2 API page](https://fal.ai/models/fal-ai/birefnet/v2/api). The result must be PNG; the backend downloads it server-side and stores a new private output asset.
 
 The verified reference-image replace-background contract is:
 
