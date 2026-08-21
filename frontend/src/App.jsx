@@ -115,19 +115,39 @@ function ShowcaseComparison({ example, index }) {
           update(event);
         }}
         onPointerMove={(event) => {
-          if (event.currentTarget.hasPointerCapture(event.pointerId)) update(event);
+          if (event.currentTarget.hasPointerCapture(event.pointerId))
+            update(event);
         }}
       >
         {example.asset ? (
-          <img className="paired-image paired-after" src={example.asset} alt={`${example.title}: after`} />
+          <img
+            className="paired-image paired-after"
+            src={example.asset}
+            alt={`${example.title}: after`}
+          />
         ) : (
-          <img className="showcase-image" src={example.after} alt={`${example.title}: after`} />
+          <img
+            className="showcase-image"
+            src={example.after}
+            alt={`${example.title}: after`}
+          />
         )}
-        <div className="showcase-before" style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}>
+        <div
+          className="showcase-before"
+          style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
+        >
           {example.asset ? (
-            <img className="paired-image paired-before" src={example.asset} alt={`${example.title}: before`} />
+            <img
+              className="paired-image paired-before"
+              src={example.asset}
+              alt={`${example.title}: before`}
+            />
           ) : (
-            <img className="showcase-image" src={example.before} alt={`${example.title}: before`} />
+            <img
+              className="showcase-image"
+              src={example.before}
+              alt={`${example.title}: before`}
+            />
           )}
         </div>
         <span className="showcase-tag tag-before">Before</span>
@@ -141,10 +161,14 @@ function ShowcaseComparison({ example, index }) {
             aria-valuemax="100"
             aria-valuenow={Math.round(position)}
             onKeyDown={(event) => {
-              if (event.key === "ArrowLeft") setPosition((value) => Math.max(0, value - 5));
-              if (event.key === "ArrowRight") setPosition((value) => Math.min(100, value + 5));
+              if (event.key === "ArrowLeft")
+                setPosition((value) => Math.max(0, value - 5));
+              if (event.key === "ArrowRight")
+                setPosition((value) => Math.min(100, value + 5));
             }}
-          >‹ ›</button>
+          >
+            ‹ ›
+          </button>
         </div>
       </div>
       <div className="showcase-card-copy">
@@ -189,20 +213,31 @@ function VideoShowcaseComparison({ index }) {
           update(event);
         }}
         onPointerMove={(event) => {
-          if (event.currentTarget.hasPointerCapture(event.pointerId)) update(event);
+          if (event.currentTarget.hasPointerCapture(event.pointerId))
+            update(event);
         }}
       >
         <video
           ref={resultRef}
           src={`/video-showcase/result-${index}.webm`}
-          autoPlay muted playsInline preload="auto"
+          autoPlay
+          muted
+          playsInline
+          preload="auto"
           onLoadedMetadata={syncResult}
         />
-        <div className="showcase-before" style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}>
+        <div
+          className="showcase-before"
+          style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
+        >
           <video
             ref={originalRef}
             src={`/video-showcase/original-${index}.mp4`}
-            autoPlay loop muted playsInline preload="auto"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
             onLoadedMetadata={syncResult}
             onTimeUpdate={syncResult}
             onPlay={syncResult}
@@ -220,10 +255,14 @@ function VideoShowcaseComparison({ index }) {
             aria-valuemax="100"
             aria-valuenow={Math.round(position)}
             onKeyDown={(event) => {
-              if (event.key === "ArrowLeft") setPosition((value) => Math.max(0, value - 5));
-              if (event.key === "ArrowRight") setPosition((value) => Math.min(100, value + 5));
+              if (event.key === "ArrowLeft")
+                setPosition((value) => Math.max(0, value - 5));
+              if (event.key === "ArrowRight")
+                setPosition((value) => Math.min(100, value + 5));
             }}
-          >‹ ›</button>
+          >
+            ‹ ›
+          </button>
         </div>
       </div>
     </article>
@@ -234,7 +273,9 @@ async function api(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, options);
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(body?.error?.message || "The request could not be completed.");
+    throw new Error(
+      body?.error?.message || "The request could not be completed.",
+    );
   }
   return body.data;
 }
@@ -273,7 +314,8 @@ export function App() {
   const [color, setColor] = useState("#E8F0FF");
   const [prompt, setPrompt] = useState("");
   const [brushSize, setBrushSize] = useState(42);
-  const [refineEdges, setRefineEdges] = useState(true);
+  const [refineForeground, setRefineForeground] = useState(true);
+  const [softenMaskEdges, setSoftenMaskEdges] = useState(true);
   const [maskRevision, setMaskRevision] = useState(0);
   const [comparisonPosition, setComparisonPosition] = useState(50);
   const [comparisonRatio, setComparisonRatio] = useState(4 / 3);
@@ -293,7 +335,6 @@ export function App() {
     mainFile,
     resultUrl,
     status,
-    stage,
     progress,
     error,
     downloadName,
@@ -453,7 +494,7 @@ export function App() {
       binary.data[index + 2] = selected ? 255 : 0;
       binary.data[index + 3] = 255;
     }
-    if (refineEdges) {
+    if (softenMaskEdges) {
       const binaryCanvas = document.createElement("canvas");
       binaryCanvas.width = source.width;
       binaryCanvas.height = source.height;
@@ -552,11 +593,13 @@ export function App() {
           ...(maskAssetId ? { maskAssetId } : {}),
           ...(backgroundAssetId ? { backgroundAssetId } : {}),
           parameters:
-            mode === "color"
-              ? { backgroundColor: color }
-              : mode === "prompt"
-                ? { backgroundPrompt: prompt.trim() }
-                : {},
+            mode === "remove" && mediaMode === "photo"
+              ? { refineForeground }
+              : mode === "color"
+                ? { backgroundColor: color }
+                : mode === "prompt"
+                  ? { backgroundPrompt: prompt.trim() }
+                  : {},
           idempotencyKey: `web-${crypto.randomUUID()}`,
         }),
       });
@@ -566,9 +609,7 @@ export function App() {
         const current = await api(`/jobs/${job.id}`, { headers: auth });
         setStage(
           current.progress?.stage ||
-            (mediaMode === "video"
-              ? "Processing video…"
-              : "Processing image…"),
+            (mediaMode === "video" ? "Processing video…" : "Processing image…"),
         );
         setProgress(
           current.progress?.percent ?? Math.min(92, 40 + attempt * 2),
@@ -658,7 +699,11 @@ export function App() {
             <h1>Background &amp; Object Remover</h1>
           </div>
           <div className="media-select-wrap">
-            {mediaMode === "photo" ? <ImageSquare size={18} /> : <VideoCamera size={18} />}
+            {mediaMode === "photo" ? (
+              <ImageSquare size={18} />
+            ) : (
+              <VideoCamera size={18} />
+            )}
             <select
               className="media-select"
               value={mediaMode}
@@ -672,7 +717,11 @@ export function App() {
           </div>
           <div
             className={`upload-canvas ${dragging ? "is-dragging" : ""} ${mainFile ? "has-image" : "is-empty"}`}
-            style={mainFile ? { "--source-ratio": sourceRatio, aspectRatio: sourceRatio } : undefined}
+            style={
+              mainFile
+                ? { "--source-ratio": sourceRatio, aspectRatio: sourceRatio }
+                : undefined
+            }
             onDragOver={(event) => {
               event.preventDefault();
               setDragging(true);
@@ -688,8 +737,16 @@ export function App() {
               <div className="editor-stage">
                 <img
                   ref={editorImageRef}
-                  src={status === "completed" && resultUrl ? resultUrl : mainPreview}
-                  alt={status === "completed" ? "Processed result" : "Uploaded source image"}
+                  src={
+                    status === "completed" && resultUrl
+                      ? resultUrl
+                      : mainPreview
+                  }
+                  alt={
+                    status === "completed"
+                      ? "Processed result"
+                      : "Uploaded source image"
+                  }
                   onLoad={(event) => {
                     const image = event.currentTarget;
                     if (image.naturalWidth && image.naturalHeight) {
@@ -727,7 +784,9 @@ export function App() {
             ) : mainFile && mediaMode === "video" ? (
               <video
                 className="video-preview"
-                src={status === "completed" && resultUrl ? resultUrl : mainPreview}
+                src={
+                  status === "completed" && resultUrl ? resultUrl : mainPreview
+                }
                 controls
                 playsInline
                 onLoadedMetadata={(event) => {
@@ -790,7 +849,11 @@ export function App() {
                       setError("");
                     }}
                   >
-                    {modes.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+                    {modes.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.title}
+                      </option>
+                    ))}
                   </select>
                   <CaretDown className="select-caret" size={15} weight="bold" />
                 </div>
@@ -801,15 +864,26 @@ export function App() {
             {status === "processing" && (
               <div className="progress-card" aria-live="polite">
                 <div className="progress-copy">
-                  <span><span className="spinner" /> {progressLabel(progress, mediaMode, mode)}</span>
+                  <span>
+                    <span className="spinner" />{" "}
+                    {progressLabel(progress, mediaMode, mode)}
+                  </span>
                   <strong>{Math.round(progress)}%</strong>
                 </div>
-                <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
+                <div className="progress-track">
+                  <span style={{ width: `${progress}%` }} />
+                </div>
               </div>
             )}
-            {error && <div className="error-message"><span>{error}</span></div>}
+            {error && (
+              <div className="error-message">
+                <span>{error}</span>
+              </div>
+            )}
             {status === "completed" && (
-              <div className="status-message success"><CheckCircle size={18} weight="fill" /> Result ready</div>
+              <div className="status-message success">
+                <CheckCircle size={18} weight="fill" /> Result ready
+              </div>
             )}
             <button
               className="primary-button mobile-primary-button"
@@ -817,18 +891,37 @@ export function App() {
               onClick={processImage}
               disabled={status === "processing"}
             >
-              {status === "processing" ? <span className="spinner" /> : mediaMode === "video" ? <VideoCamera size={20} /> : <MagicWand size={20} weight="fill" />}
-              <span>{status === "processing" ? progressLabel(progress, mediaMode, mode) : mediaMode === "video" ? "Remove video background" : actionLabel}</span>
+              {status === "processing" ? (
+                <span className="spinner" />
+              ) : mediaMode === "video" ? (
+                <VideoCamera size={20} />
+              ) : (
+                <MagicWand size={20} weight="fill" />
+              )}
+              <span>
+                {status === "processing"
+                  ? progressLabel(progress, mediaMode, mode)
+                  : mediaMode === "video"
+                    ? "Remove video background"
+                    : actionLabel}
+              </span>
             </button>
             {status === "completed" && (
-              <a className="download-button" href={resultUrl} download={downloadName}>
+              <a
+                className="download-button"
+                href={resultUrl}
+                download={downloadName}
+              >
                 <DownloadSimple size={20} /> Download result
               </a>
             )}
           </div>
 
           {mediaMode === "photo" && (!mainFile || status === "completed") && (
-            <div className="comparison" aria-label="Before and after comparison">
+            <div
+              className="comparison"
+              aria-label="Before and after comparison"
+            >
               <div className="comparison-title">
                 <span>Result preview</span>
                 <div className="comparison-presets">
@@ -985,7 +1078,9 @@ export function App() {
                           onPause={() => resultVideoRef.current?.pause()}
                         />
                       </div>
-                      <span className="comparison-label before-label">Before</span>
+                      <span className="comparison-label before-label">
+                        Before
+                      </span>
                       <span className="comparison-label after-label">
                         After
                       </span>
@@ -1044,55 +1139,66 @@ export function App() {
                 the audio track. Your result is delivered as a transparent WebM.
               </p>
               <div className="panel-footer video-panel-footer">
-              {error && (
-                <div className="error-message">
-                  <span>{error}</span>
-                  <button type="button" onClick={processImage}>
-                    Try again
-                  </button>
-                </div>
-              )}
-              {status === "processing" && (
-                <div className="progress-card" aria-live="polite">
-                  <div className="progress-copy">
-                    <span><span className="spinner" /> {progressLabel(progress, mediaMode, mode)}</span>
-                    <strong>{Math.round(progress)}%</strong>
+                {error && (
+                  <div className="error-message">
+                    <span>{error}</span>
+                    <button type="button" onClick={processImage}>
+                      Try again
+                    </button>
                   </div>
-                  <div className="progress-track">
-                    <span style={{ width: `${progress}%` }} />
+                )}
+                {status === "processing" && (
+                  <div className="progress-card" aria-live="polite">
+                    <div className="progress-copy">
+                      <span>
+                        <span className="spinner" />{" "}
+                        {progressLabel(progress, mediaMode, mode)}
+                      </span>
+                      <strong>{Math.round(progress)}%</strong>
+                    </div>
+                    <div className="progress-track">
+                      <span style={{ width: `${progress}%` }} />
+                    </div>
                   </div>
-                </div>
-              )}
-              {status === "completed" && (
-                <div className="status-message success">
-                  <CheckCircle size={18} weight="fill" /> Video processed
-                </div>
-              )}
-              <button
-                className="primary-button"
-                type="button"
-                onClick={processImage}
-                disabled={status === "processing"}
-              >
-                {status === "processing" ? <span className="spinner" /> : <VideoCamera size={20} />}
-                <span>{status === "processing" ? progressLabel(progress, mediaMode, mode) : "Remove video background"}</span>
-              </button>
-              {status === "completed" && (
+                )}
+                {status === "completed" && (
+                  <div className="status-message success">
+                    <CheckCircle size={18} weight="fill" /> Video processed
+                  </div>
+                )}
                 <button
-                  className="regenerate-button"
+                  className="primary-button"
                   type="button"
                   onClick={processImage}
+                  disabled={status === "processing"}
                 >
-                  <ArrowCounterClockwise size={19} /> Process again
+                  {status === "processing" ? (
+                    <span className="spinner" />
+                  ) : (
+                    <VideoCamera size={20} />
+                  )}
+                  <span>
+                    {status === "processing"
+                      ? progressLabel(progress, mediaMode, mode)
+                      : "Remove video background"}
+                  </span>
                 </button>
-              )}
-              <a
-                className={`download-button ${!resultUrl ? "disabled" : ""}`}
-                href={resultUrl || undefined}
-                download={downloadName}
-              >
-                <DownloadSimple size={21} /> Download WebM
-              </a>
+                {status === "completed" && (
+                  <button
+                    className="regenerate-button"
+                    type="button"
+                    onClick={processImage}
+                  >
+                    <ArrowCounterClockwise size={19} /> Process again
+                  </button>
+                )}
+                <a
+                  className={`download-button ${!resultUrl ? "disabled" : ""}`}
+                  href={resultUrl || undefined}
+                  download={downloadName}
+                >
+                  <DownloadSimple size={21} /> Download WebM
+                </a>
               </div>
             </div>
           ) : (
@@ -1141,9 +1247,7 @@ export function App() {
                       <ImageSquare size={26} />
                     )}
                     <span>
-                      {backgroundFile
-                        ? backgroundFile.name
-                        : "Choose an image"}
+                      {backgroundFile ? backgroundFile.name : "Choose an image"}
                     </span>
                   </button>
                   <input
@@ -1198,7 +1302,27 @@ export function App() {
                     onChange={(event) => setPrompt(event.target.value)}
                   />
                   <small className="field-hint">
-                    AI keeps the subject and creates the environment you describe.
+                    AI keeps the subject and creates the environment you
+                    describe.
+                  </small>
+                </div>
+              )}
+
+              {mode === "remove" && mediaMode === "photo" && (
+                <div className="mode-detail">
+                  <label className="edge-toggle">
+                    <input
+                      type="checkbox"
+                      checked={refineForeground}
+                      onChange={(event) =>
+                        setRefineForeground(event.target.checked)
+                      }
+                    />
+                    <span>Refine hair and fine details</span>
+                  </label>
+                  <small className="field-hint">
+                    AI matting preserves hair, fur, transparency, and other
+                    difficult edges.
                   </small>
                 </div>
               )}
@@ -1229,10 +1353,12 @@ export function App() {
                   <label className="edge-toggle">
                     <input
                       type="checkbox"
-                      checked={refineEdges}
-                      onChange={(event) => setRefineEdges(event.target.checked)}
+                      checked={softenMaskEdges}
+                      onChange={(event) =>
+                        setSoftenMaskEdges(event.target.checked)
+                      }
                     />
-                    <span>Refine mask edges</span>
+                    <span>Soften mask edges</span>
                   </label>
                   <small className="field-hint">
                     Paint only the unwanted object. The background will be
@@ -1251,9 +1377,12 @@ export function App() {
                   </div>
                 )}
                 {status === "processing" && (
-                <div className="progress-card" aria-live="polite">
-                  <div className="progress-copy">
-                      <span><span className="spinner" /> {progressLabel(progress, mediaMode, mode)}</span>
+                  <div className="progress-card" aria-live="polite">
+                    <div className="progress-copy">
+                      <span>
+                        <span className="spinner" />{" "}
+                        {progressLabel(progress, mediaMode, mode)}
+                      </span>
                       <strong>{Math.round(progress)}%</strong>
                     </div>
                     <div className="progress-track">
@@ -1272,8 +1401,16 @@ export function App() {
                   onClick={processImage}
                   disabled={status === "processing"}
                 >
-                  {status === "processing" ? <span className="spinner" /> : <MagicWand size={21} weight="fill" />}
-                  <span>{status === "processing" ? progressLabel(progress, mediaMode, mode) : actionLabel}</span>
+                  {status === "processing" ? (
+                    <span className="spinner" />
+                  ) : (
+                    <MagicWand size={21} weight="fill" />
+                  )}
+                  <span>
+                    {status === "processing"
+                      ? progressLabel(progress, mediaMode, mode)
+                      : actionLabel}
+                  </span>
                 </button>
                 {status === "completed" && (
                   <button
@@ -1303,24 +1440,40 @@ export function App() {
       <section className="marketing-section steps-section">
         <div className="section-heading">
           <p className="eyebrow">How it works</p>
-          <h2>REMOVE BACKGROUNDS<br />IN 3 EASY STEPS</h2>
-          <p>Go from your original file to a clean transparent result in under a minute — no manual tracing.</p>
+          <h2>
+            REMOVE BACKGROUNDS
+            <br />
+            IN 3 EASY STEPS
+          </h2>
+          <p>
+            Go from your original file to a clean transparent result in under a
+            minute — no manual tracing.
+          </p>
         </div>
         <div className="steps-grid">
           <article className="step-card">
-            <span className="step-icon"><UploadSimple size={26} weight="bold" /></span>
+            <span className="step-icon">
+              <UploadSimple size={26} weight="bold" />
+            </span>
             <span className="step-number">01 / UPLOAD</span>
             <h3>Upload your file</h3>
             <p>Drop a JPG, PNG, WebP or supported video into the workspace.</p>
           </article>
           <article className="step-card featured">
-            <span className="step-icon"><Sparkle size={26} weight="fill" /></span>
+            <span className="step-icon">
+              <Sparkle size={26} weight="fill" />
+            </span>
             <span className="step-number">02 / CHOOSE</span>
             <h3>Choose an action</h3>
-            <p>Remove, replace or create a background, or erase an unwanted object.</p>
+            <p>
+              Remove, replace or create a background, or erase an unwanted
+              object.
+            </p>
           </article>
           <article className="step-card">
-            <span className="step-icon"><DownloadSimple size={26} weight="bold" /></span>
+            <span className="step-icon">
+              <DownloadSimple size={26} weight="bold" />
+            </span>
             <span className="step-number">03 / DOWNLOAD</span>
             <h3>Download the result</h3>
             <p>Save a transparent file or create a new background instantly.</p>
@@ -1330,16 +1483,45 @@ export function App() {
 
       <section className="marketing-section showcase-section">
         <div className="section-heading split-heading">
-          <div><p className="eyebrow">Results</p><h2>{mediaMode === "video" ? <>SEE EVERY FRAME<br /><span>STAY CONSISTENT.</span></> : <>COMPLEX BACKGROUND?<br /><span>NO PROBLEM.</span></>}</h2></div>
-          <p>{mediaMode === "video" ? "Drag each slider to compare the original video with its background-free result." : "Drag the slider to inspect the result across portraits, products, animals and fine edges."}</p>
+          <div>
+            <p className="eyebrow">Results</p>
+            <h2>
+              {mediaMode === "video" ? (
+                <>
+                  SEE EVERY FRAME
+                  <br />
+                  <span>STAY CONSISTENT.</span>
+                </>
+              ) : (
+                <>
+                  COMPLEX BACKGROUND?
+                  <br />
+                  <span>NO PROBLEM.</span>
+                </>
+              )}
+            </h2>
+          </div>
+          <p>
+            {mediaMode === "video"
+              ? "Drag each slider to compare the original video with its background-free result."
+              : "Drag the slider to inspect the result across portraits, products, animals and fine edges."}
+          </p>
         </div>
         {mediaMode === "video" ? (
           <div className="video-showcase-grid">
-            {[1, 2, 3].map((index) => <VideoShowcaseComparison key={index} index={index} />)}
+            {[1, 2, 3].map((index) => (
+              <VideoShowcaseComparison key={index} index={index} />
+            ))}
           </div>
         ) : (
           <div className="showcase-grid">
-            {showcaseExamples.map((example, index) => <ShowcaseComparison key={`${example.title}-${index}`} example={example} index={index} />)}
+            {showcaseExamples.map((example, index) => (
+              <ShowcaseComparison
+                key={`${example.title}-${index}`}
+                example={example}
+                index={index}
+              />
+            ))}
           </div>
         )}
       </section>
@@ -1347,20 +1529,86 @@ export function App() {
       <section className="marketing-section benefits-section">
         <div className="section-heading">
           <p className="eyebrow">Why it works</p>
-          <h2>{mediaMode === "video" ? "BUILT FOR EVERY FRAME" : "PRECISION IN EVERY PIXEL"}</h2>
+          <h2>
+            {mediaMode === "video"
+              ? "BUILT FOR EVERY FRAME"
+              : "PRECISION IN EVERY PIXEL"}
+          </h2>
         </div>
         <div className="benefits-grid">
           {mediaMode === "video" ? (
             <>
-              <article className="benefit-card"><span className="benefit-icon"><Target size={30} weight="bold" /></span><p className="eyebrow">01 / Tracking</p><h3>Frame-by-Frame Tracking</h3><p>The model follows your subject through every frame — handling motion, rotation and occlusion while keeping edges crisp and natural.</p></article>
-              <article className="benefit-card"><span className="benefit-icon"><Shapes size={30} weight="bold" /></span><p className="eyebrow">02 / Stability</p><h3>Temporal Consistency</h3><p>No flickering, no jitter. AI keeps cutouts smooth and stable, with consistent edges from the first frame to the last.</p></article>
-              <article className="benefit-card"><span className="benefit-icon"><Lightning size={30} weight="fill" /></span><p className="eyebrow">03 / Workflow</p><h3>One-Click Processing</h3><p>No rotoscoping and no manual masks. Upload your video, hit Generate and get a clean background removal without hours of manual work.</p></article>
+              <article className="benefit-card">
+                <span className="benefit-icon">
+                  <Target size={30} weight="bold" />
+                </span>
+                <p className="eyebrow">01 / Tracking</p>
+                <h3>Frame-by-Frame Tracking</h3>
+                <p>
+                  The model follows your subject through every frame — handling
+                  motion, rotation and occlusion while keeping edges crisp and
+                  natural.
+                </p>
+              </article>
+              <article className="benefit-card">
+                <span className="benefit-icon">
+                  <Shapes size={30} weight="bold" />
+                </span>
+                <p className="eyebrow">02 / Stability</p>
+                <h3>Temporal Consistency</h3>
+                <p>
+                  No flickering, no jitter. AI keeps cutouts smooth and stable,
+                  with consistent edges from the first frame to the last.
+                </p>
+              </article>
+              <article className="benefit-card">
+                <span className="benefit-icon">
+                  <Lightning size={30} weight="fill" />
+                </span>
+                <p className="eyebrow">03 / Workflow</p>
+                <h3>One-Click Processing</h3>
+                <p>
+                  No rotoscoping and no manual masks. Upload your video, hit
+                  Generate and get a clean background removal without hours of
+                  manual work.
+                </p>
+              </article>
             </>
           ) : (
             <>
-              <article className="benefit-card"><span className="benefit-icon"><Target size={30} weight="bold" /></span><p className="eyebrow">01 / Accuracy</p><h3>Precise Subject Detection</h3><p>AI preserves hair, fur, transparent details and fine edges without rough cutout lines.</p></article>
-              <article className="benefit-card"><span className="benefit-icon"><Shapes size={30} weight="bold" /></span><p className="eyebrow">02 / Universal</p><h3>Works with Any Subject</h3><p>People, products, animals, vehicles and complex objects — all handled in one tool.</p></article>
-              <article className="benefit-card"><span className="benefit-icon"><Lightning size={30} weight="fill" /></span><p className="eyebrow">03 / Speed</p><h3>Fast Generation</h3><p>Get a polished result in seconds — no Photoshop, manual masks or lengthy retouching.</p></article>
+              <article className="benefit-card">
+                <span className="benefit-icon">
+                  <Target size={30} weight="bold" />
+                </span>
+                <p className="eyebrow">01 / Accuracy</p>
+                <h3>Precise Subject Detection</h3>
+                <p>
+                  AI preserves hair, fur, transparent details and fine edges
+                  without rough cutout lines.
+                </p>
+              </article>
+              <article className="benefit-card">
+                <span className="benefit-icon">
+                  <Shapes size={30} weight="bold" />
+                </span>
+                <p className="eyebrow">02 / Universal</p>
+                <h3>Works with Any Subject</h3>
+                <p>
+                  People, products, animals, vehicles and complex objects — all
+                  handled in one tool.
+                </p>
+              </article>
+              <article className="benefit-card">
+                <span className="benefit-icon">
+                  <Lightning size={30} weight="fill" />
+                </span>
+                <p className="eyebrow">03 / Speed</p>
+                <h3>Fast Generation</h3>
+                <p>
+                  Get a polished result in seconds — no Photoshop, manual masks
+                  or lengthy retouching.
+                </p>
+              </article>
             </>
           )}
         </div>

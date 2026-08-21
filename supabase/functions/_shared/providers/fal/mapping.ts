@@ -1,8 +1,7 @@
 import type { JobOperation } from "../../types.ts";
 import { AppError } from "../../errors.ts";
 
-export const FAL_REMOVE_BACKGROUND_MODEL_ID =
-  "fal-ai/bria/background/remove" as const;
+export const FAL_REMOVE_BACKGROUND_MODEL_ID = "fal-ai/birefnet/v2" as const;
 export const FAL_REPLACE_BACKGROUND_MODEL_ID =
   "fal-ai/bria/background/replace" as const;
 export const FAL_ERASE_OBJECT_MODEL_ID = "fal-ai/bria/eraser" as const;
